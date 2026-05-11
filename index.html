@@ -528,12 +528,35 @@
   }
 
   @media (max-width: 900px) {
-    .main { padding: 16px; }
-    .header { padding: 0 16px; }
-    .tabs { padding: 0 16px; overflow-x: auto; }
-    .summary-cards { grid-template-columns: repeat(3, 1fr); }
+    .main { padding: 12px; }
+    .header { padding: 0 12px; height: auto; min-height: 64px; flex-wrap: wrap; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+    .header-sub { display: none; }
+    .tabs { padding: 0 12px; overflow-x: auto; }
+    .tab { padding: 12px 10px; font-size: 12px; }
+    .summary-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .content-grid { grid-template-columns: 1fr; }
-    .calendar-day { min-height: 60px; }
+    .calendar-day { min-height: 56px; }
+    .day-badge { font-size: 9px; padding: 1px 3px; }
+    .sidebar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .detail-table th, .detail-table td { padding: 6px 8px; font-size: 11px; }
+    .detail-table th:nth-child(5),
+    .detail-table td:nth-child(5),
+    .detail-table th:nth-child(6),
+    .detail-table td:nth-child(6) { display: none; }
+    .btn { padding: 7px 12px; font-size: 12px; }
+    .summary-card-value { font-size: 22px; }
+    .region-tabs { padding: 12px; gap: 6px; }
+    .region-tab { padding: 4px 10px; font-size: 11px; }
+    .calendar-weekday { font-size: 10px; }
+    .calendar-grid { padding: 10px; }
+  }
+
+  @media (max-width: 480px) {
+    .summary-cards { grid-template-columns: repeat(2, 1fr); }
+    .sidebar { grid-template-columns: 1fr; }
+    .header-right .btn-outline { display: none; }
+    .calendar-days { gap: 2px; }
+    .calendar-day { min-height: 48px; padding: 4px; }
   }
 </style>
 </head>
@@ -778,6 +801,15 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxV1bO0g4SrGYGC
 // 상태
 // ================================================================
 let allData = [];
+
+// 회의실 → 지역 매핑 (데이터에 지역 없을 때 자동 추론)
+const ROOM_REGION_MAP = {
+  '[판교] 미팅룸 1': '판교', '[판교] 미팅룸 2': '판교',
+  '[판교] 미팅룸 3': '판교', '[판교] 미팅룸 4': '판교',
+  '[판교] 미팅룸 5': '판교', '[부천] 회의실': '부천',
+  '[시흥] 회의실': '시흥', '[의정부] 회의실': '의정부',
+  '[하남] 회의실': '하남',
+};
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 let selectedDate = null;
@@ -796,7 +828,13 @@ async function loadData() {
   try {
     const json = await fetchJSONP(APPS_SCRIPT_URL);
     if (!json.success) throw new Error(json.error);
-    allData = json.data;
+    allData = json.data.map(function(d) {
+      // 지역 없으면 회의실명으로 자동 추론
+      if (!d.region && d.room && ROOM_REGION_MAP[d.room]) {
+        d.region = ROOM_REGION_MAP[d.room];
+      }
+      return d;
+    });
 
     updateStats();
     renderCalendar();

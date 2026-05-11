@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G-AIX 회의실 예약 현황</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6fa;
+    --card: #ffffff;
+    --border: #e8ecf2;
+    --text: #1a1f2e;
+    --text-sub: #6b7280;
+    --text-light: #9ca3af;
+    --primary: #2563eb;
+    --판교: #2563eb;
+    --부천: #16a34a;
+    --시흥: #ea580c;
+    --의정부: #9333ea;
+    --하남: #db2777;
+    --판교-bg: #eff6ff;
+    --부천-bg: #f0fdf4;
+    --시흥-bg: #fff7ed;
+    --의정부-bg: #faf5ff;
+    --하남-bg: #fdf2f8;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* 헤더 */
+  .header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-logo {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+  }
+
+  .header-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 1px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover { background: #1d4ed8; }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--text-sub);
+    border: 1px solid var(--border);
+  }
+
+  .btn-outline:hover { background: var(--bg); }
+
+  /* 탭 */
+  .tabs {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .tab {
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-sub);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+  }
+
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* 메인 레이아웃 */
+  .main {
+    padding: 24px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* 요약 카드 */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .summary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .summary-card-label {
+    font-size: 12px;
+    color: var(--text-sub);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .summary-card-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .summary-card-value span {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-sub);
+  }
+
+  .summary-card.alert .summary-card-value { color: #dc2626; }
+  .summary-card.warning .summary-card-value { color: #ea580c; }
+
+  /* 컨텐츠 영역 */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .card-sub {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 2px;
+  }
+
+  /* 월력 */
+  .calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .calendar-nav-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--text-sub);
+    transition: all 0.15s;
+  }
+
+  .calendar-nav-btn:hover { background: var(--bg); }
+
+  .calendar-month {
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  .calendar-grid {
+    padding: 16px 20px;
+  }
+
+  .calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 8px;
+  }
+
+  .calendar-weekday {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-sub);
+    padding: 6px 0;
+  }
+
+  .calendar-weekday:first-child { color: #ef4444; }
+  .calendar-weekday:last-child { color: #3b82f6; }
+
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .calendar-day {
+    min-height: 80px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .calendar-day:hover { border-color: var(--primary); background: #f8faff; }
+  .calendar-day.today { border-color: var(--primary); background: #eff6ff; }
+  .calendar-day.other-month { opacity: 0.4; }
+  .calendar-day.selected { border-color: var(--primary); background: #eff6ff; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+
+  .day-number {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .calendar-day.today .day-number {
+    background: var(--primary);
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  .day-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .day-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .badge-판교 { background: var(--판교-bg); color: var(--판교); }
+  .badge-부천 { background: var(--부천-bg); color: var(--부천); }
+  .badge-시흥 { background: var(--시흥-bg); color: var(--시흥); }
+  .badge-의정부 { background: var(--의정부-bg); color: var(--의정부); }
+  .badge-하남 { background: var(--하남-bg); color: var(--하남); }
+
+  /* 선택한 날짜 상세 */
+  .detail-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .detail-table th {
+    background: var(--bg);
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-sub);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-table tr:last-child td { border-bottom: none; }
+  .detail-table tr:hover td { background: var(--bg); }
+
+  /* 지역 뱃지 */
+  .region-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* 상태 뱃지 */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .status-신청 { background: #fef9c3; color: #854d0e; }
+  .status-승인 { background: #dcfce7; color: #166534; }
+  .status-거절 { background: #fee2e2; color: #991b1b; }
+  .status-취소 { background: #f3f4f6; color: #6b7280; }
+
+  /* 사이드바 */
+  .sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-label { font-size: 13px; color: var(--text); }
+  .legend-count { font-size: 12px; color: var(--text-sub); margin-left: auto; font-weight: 600; }
+
+  .today-summary { padding: 16px 20px; }
+
+  .today-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .today-item:last-child { border-bottom: none; }
+
+  .today-region {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .today-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .today-count {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .quick-links { padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+
+  .quick-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-sub);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .quick-link:hover { background: var(--bg); color: var(--text); }
+
+  /* 지역별 탭 */
+  .region-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .region-tab {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: white;
+    color: var(--text-sub);
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .region-tab.active-판교 { background: var(--판교-bg); color: var(--판교); border-color: var(--판교); }
+  .region-tab.active-부천 { background: var(--부천-bg); color: var(--부천); border-color: var(--부천); }
+  .region-tab.active-시흥 { background: var(--시흥-bg); color: var(--시흥); border-color: var(--시흥); }
+  .region-tab.active-의정부 { background: var(--의정부-bg); color: var(--의정부); border-color: var(--의정부); }
+  .region-tab.active-하남 { background: var(--하남-bg); color: var(--하남); border-color: var(--하남); }
+
+  /* 로딩 */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: var(--text-sub);
+    font-size: 14px;
+    gap: 10px;
+  }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 탭 컨텐츠 */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* 에러 */
+  .error-msg {
+    padding: 20px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    color: #dc2626;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  /* 빈 상태 */
+  .empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 13px;
+  }
+
+  @media (max-width: 900px) {
+    .main { padding: 16px; }
+    .header { padding: 0 16px; }
+    .tabs { padding: 0 16px; overflow-x: auto; }
+    .summary-cards { grid-template-columns: repeat(3, 1fr); }
+    .content-grid { grid-template-columns: 1fr; }
+    .calendar-day { min-height: 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">🏢</div>
+    <div>
+      <div class="header-title">G-AIX 회의실 예약 현황</div>
+      <div class="header-sub">5개 지역 · 총 9개 회의실</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-outline" onclick="loadData()">🔄 새로고침</button>
+    <button class="btn btn-primary" onclick="window.open('https://www.notion.so/8d0ddc320ea647efb4c47badc5c21dc3?pvs=106')">예약하기</button>
+  </div>
+</header>
+
+<!-- 탭 -->
+<nav class="tabs">
+  <div class="tab active" onclick="switchTab('all', this)">전체 현황</div>
+  <div class="tab" onclick="switchTab('region', this)">지역별 현황</div>
+  <div class="tab" onclick="switchTab('notice', this)">공지사항</div>
+  <div class="tab" onclick="switchTab('guide', this)">이용 안내</div>
+</nav>
+
+<!-- 메인 -->
+<main class="main">
+
+  <!-- 요약 카드 -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <div class="summary-card-label">오늘 예약</div>
+      <div class="summary-card-value" id="stat-today">-<span>건</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-label">이번 주 예약</div>
+      <div class="summary-card-value" id="stat-week">-<span>건</span></div>
+    </div>
+    <div class="summary-card alert">
+      <div class="summary-card-label">승인 대기</div>
+      <div class="summary-card-value" id="stat-pending">-<span>건</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-label">이번 달 예약</div>
+      <div class="summary-card-value" id="stat-month">-<span>건</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-label">전체 회의실</div>
+      <div class="summary-card-value">9<span>개</span></div>
+    </div>
+  </div>
+
+  <!-- 전체 현황 탭 -->
+  <div id="tab-all" class="tab-content active">
+    <div class="content-grid">
+      <!-- 캘린더 -->
+      <div>
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">전체 월간 예약 현황</div>
+              <div class="card-sub">지역별 색상으로 예약 건수 표시</div>
+            </div>
+            <div class="calendar-nav">
+              <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹</button>
+              <div class="calendar-month" id="calendar-month-label">2026년 5월</div>
+              <button class="calendar-nav-btn" onclick="changeMonth(1)">›</button>
+            </div>
+          </div>
+          <div class="calendar-grid">
+            <div class="calendar-weekdays">
+              <div class="calendar-weekday">일</div>
+              <div class="calendar-weekday">월</div>
+              <div class="calendar-weekday">화</div>
+              <div class="calendar-weekday">수</div>
+              <div class="calendar-weekday">목</div>
+              <div class="calendar-weekday">금</div>
+              <div class="calendar-weekday">토</div>
+            </div>
+            <div class="calendar-days" id="calendar-days">
+              <div class="loading"><div class="spinner"></div> 데이터 로딩 중...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 선택 날짜 상세 -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title" id="detail-title">날짜를 선택하세요</div>
+              <div class="card-sub">해당 날짜의 예약 상세 내역</div>
+            </div>
+          </div>
+          <div id="detail-content">
+            <div class="empty">캘린더에서 날짜를 클릭하면 상세 예약 내역이 표시됩니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사이드바 -->
+      <div class="sidebar">
+        <!-- 지역 범례 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">지역 색상 범례</div>
+          </div>
+          <div style="padding: 12px 20px;">
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--판교);"></div>
+              <span class="legend-label">판교</span>
+              <span class="legend-count" id="legend-판교">-건</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--부천);"></div>
+              <span class="legend-label">부천</span>
+              <span class="legend-count" id="legend-부천">-건</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--시흥);"></div>
+              <span class="legend-label">시흥</span>
+              <span class="legend-count" id="legend-시흥">-건</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--의정부);"></div>
+              <span class="legend-label">의정부</span>
+              <span class="legend-count" id="legend-의정부">-건</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--하남);"></div>
+              <span class="legend-label">하남</span>
+              <span class="legend-count" id="legend-하남">-건</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오늘 요약 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="today-label">오늘 요약</div>
+          </div>
+          <div class="today-summary" id="today-summary">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- 바로가기 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">바로가기</div>
+          </div>
+          <div class="quick-links">
+            <a class="quick-link" href="https://www.notion.so/8d0ddc320ea647efb4c47badc5c21dc3?pvs=106" target="_blank">
+              📝 회의실 예약하기
+            </a>
+            <a class="quick-link" href="https://www.notion.so/041f6107301f4c0cbd6d9c52963880a7" target="_blank">
+              📋 예약 신청 현황 (관리자)
+            </a>
+            <a class="quick-link" href="https://www.notion.so/35c81b6b948781cb8d17c1a80c5f9a2c" target="_blank">
+              🏛️ G-AIX 포털
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 지역별 현황 탭 -->
+  <div id="tab-region" class="tab-content">
+    <div class="card">
+      <div class="region-tabs">
+        <button class="region-tab active-판교" onclick="selectRegion('판교', this)" id="rtab-판교">판교</button>
+        <button class="region-tab" onclick="selectRegion('부천', this)" id="rtab-부천">부천</button>
+        <button class="region-tab" onclick="selectRegion('시흥', this)" id="rtab-시흥">시흥</button>
+        <button class="region-tab" onclick="selectRegion('의정부', this)" id="rtab-의정부">의정부</button>
+        <button class="region-tab" onclick="selectRegion('하남', this)" id="rtab-하남">하남</button>
+      </div>
+      <div id="region-content">
+        <div class="loading"><div class="spinner"></div> 로딩 중...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공지사항 탭 -->
+  <div id="tab-notice" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">공지사항</div>
+      </div>
+      <div style="padding: 40px; text-align: center; color: var(--text-sub); font-size: 13px;">
+        Notion 포털에서 공지사항을 확인해주세요.<br><br>
+        <a href="https://www.notion.so/35c81b6b948781cb8d17c1a80c5f9a2c" target="_blank" class="btn btn-primary" style="display: inline-block; margin-top: 8px; text-decoration: none;">공지사항 보기 →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 이용 안내 탭 -->
+  <div id="tab-guide" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">이용 안내</div>
+      </div>
+      <div style="padding: 24px;">
+        <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">예약 방법</h3>
+        <ol style="font-size: 13px; color: var(--text-sub); line-height: 2; padding-left: 20px;">
+          <li>상단 <strong>예약하기</strong> 버튼 클릭</li>
+          <li>지역 및 회의실 선택</li>
+          <li>예약 날짜, 시작/종료 시간 선택</li>
+          <li>신청자 정보 입력 후 제출</li>
+          <li>자동 처리 후 이메일로 결과 안내 (최대 5분)</li>
+        </ol>
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+        <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">이용 수칙</h3>
+        <ul style="font-size: 13px; color: var(--text-sub); line-height: 2; padding-left: 20px;">
+          <li>예약 후 10분 이상 미입실 시 예약이 취소될 수 있습니다.</li>
+          <li>사용 후 책상 및 장비를 원상태로 정리해주세요.</li>
+          <li>예약 취소는 사용 1시간 전까지 운영팀에 연락 바랍니다.</li>
+          <li>장비 이상 발생 시 즉시 운영팀으로 연락해주세요.</li>
+        </ul>
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+        <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">운영 시간</h3>
+        <p style="font-size: 13px; color: var(--text-sub); line-height: 2;">평일 09:00 ~ 18:00 (점심시간 12:00~13:00 제외)</p>
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+        <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">문의</h3>
+        <p style="font-size: 13px; color: var(--text-sub);">📧 gbsaaicluster@gmail.com</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ================================================================
+// 설정값 — 여기만 수정하면 됩니다
+// ================================================================
+const NOTION_TOKEN = 'secret_여기에_노션_API키_입력';
+const DATABASE_ID = '041f6107301f4c0cbd6d9c52963880a7';
+
+// ================================================================
+// 상태
+// ================================================================
+let allData = [];
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let selectedDate = null;
+let selectedRegion = '판교';
+
+const REGIONS = ['판교', '부천', '시흥', '의정부', '하남'];
+const REGION_COLORS = {
+  '판교': '#2563eb', '부천': '#16a34a',
+  '시흥': '#ea580c', '의정부': '#9333ea', '하남': '#db2777'
+};
+
+// ================================================================
+// 데이터 로드
+// ================================================================
+async function loadData() {
+  try {
+    const res = await fetch(`https://api.notion.com/v1/databases/${DATABASE_ID}/query`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        filter: { property: '상태', select: { does_not_equal: '취소' } },
+        sorts: [{ property: '예약 날짜', direction: 'ascending' }],
+        page_size: 100
+      })
+    });
+
+    const data = await res.json();
+    if (data.object === 'error') throw new Error(data.message);
+
+    allData = data.results.map(p => ({
+      id: p.id,
+      title: p.properties['예약 제목']?.title?.[0]?.plain_text || '예약',
+      region: p.properties['지역']?.select?.name || '',
+      room: p.properties['회의실']?.select?.name || '',
+      date: p.properties['예약 날짜']?.date?.start || '',
+      startTime: p.properties['시작 시간']?.select?.name || '',
+      endTime: p.properties['종료 시간']?.select?.name || '',
+      applicant: p.properties['신청자 이름']?.rich_text?.[0]?.plain_text || '',
+      company: p.properties['소속 기업']?.rich_text?.[0]?.plain_text || '',
+      status: p.properties['상태']?.select?.name || '',
+      headcount: p.properties['참석 인원']?.number || 0,
+    }));
+
+    updateStats();
+    renderCalendar();
+    renderTodaySummary();
+    renderLegend();
+    renderRegion(selectedRegion);
+
+  } catch (e) {
+    document.getElementById('calendar-days').innerHTML =
+      `<div class="error-msg" style="grid-column: 1/-1;">데이터 로드 실패: ${e.message}<br><small>Notion API 토큰을 확인해주세요.</small></div>`;
+  }
+}
+
+// ================================================================
+// 통계 업데이트
+// ================================================================
+function updateStats() {
+  const today = toDateStr(new Date());
+  const now = new Date();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
+  const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + (6 - now.getDay()));
+  const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+  const approved = allData.filter(d => d.status === '승인');
+  const todayCount = approved.filter(d => d.date === today).length;
+  const weekCount = approved.filter(d => d.date >= toDateStr(weekStart) && d.date <= toDateStr(weekEnd)).length;
+  const monthCount = approved.filter(d => d.date.startsWith(monthStr)).length;
+  const pendingCount = allData.filter(d => d.status === '신청' || !d.status).length;
+
+  document.getElementById('stat-today').innerHTML = `${todayCount}<span>건</span>`;
+  document.getElementById('stat-week').innerHTML = `${weekCount}<span>건</span>`;
+  document.getElementById('stat-month').innerHTML = `${monthCount}<span>건</span>`;
+  document.getElementById('stat-pending').innerHTML = `${pendingCount}<span>건</span>`;
+}
+
+// ================================================================
+// 범례 업데이트
+// ================================================================
+function renderLegend() {
+  const monthStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+  const approved = allData.filter(d => d.status === '승인' && d.date.startsWith(monthStr));
+  REGIONS.forEach(r => {
+    const el = document.getElementById(`legend-${r}`);
+    if (el) el.textContent = approved.filter(d => d.region === r).length + '건';
+  });
+}
+
+// ================================================================
+// 오늘 요약
+// ================================================================
+function renderTodaySummary() {
+  const today = toDateStr(new Date());
+  const todayData = allData.filter(d => d.status === '승인' && d.date === today);
+  const now = new Date();
+  document.getElementById('today-label').textContent =
+    `오늘 요약 (${now.getMonth()+1}/${now.getDate()})`;
+
+  const totalEl = `<div class="today-item"><div class="today-region"><span>전체 예약</span></div><span class="today-count">${todayData.length}건</span></div>`;
+  const regionItems = REGIONS.map(r => {
+    const cnt = todayData.filter(d => d.region === r).length;
+    return `<div class="today-item">
+      <div class="today-region">
+        <div class="today-dot" style="background: ${REGION_COLORS[r]};"></div>
+        <span>${r}</span>
+      </div>
+      <span class="today-count" style="color: ${REGION_COLORS[r]};">${cnt}건</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('today-summary').innerHTML = totalEl + regionItems;
+}
+
+// ================================================================
+// 캘린더 렌더링
+// ================================================================
+function renderCalendar() {
+  const label = `${currentYear}년 ${currentMonth+1}월`;
+  document.getElementById('calendar-month-label').textContent = label;
+
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const lastDate = new Date(currentYear, currentMonth+1, 0).getDate();
+  const today = toDateStr(new Date());
+
+  const approved = allData.filter(d => d.status === '승인');
+
+  let html = '';
+  let dayCount = 1;
+  const totalCells = Math.ceil((firstDay + lastDate) / 7) * 7;
+
+  for (let i = 0; i < totalCells; i++) {
+    if (i < firstDay || dayCount > lastDate) {
+      // 다른 달 날짜
+      if (i < firstDay) {
+        const prevLast = new Date(currentYear, currentMonth, 0).getDate();
+        const d = prevLast - (firstDay - 1 - i);
+        html += `<div class="calendar-day other-month"><div class="day-number">${d}</div></div>`;
+      } else {
+        const d = i - firstDay - lastDate + 1;
+        html += `<div class="calendar-day other-month"><div class="day-number">${d}</div></div>`;
+      }
+    } else {
+      const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`;
+      const isToday = dateStr === today;
+      const isSelected = dateStr === selectedDate;
+
+      const dayData = approved.filter(d => d.date === dateStr);
+
+      // 지역별 집계
+      const regionCounts = {};
+      dayData.forEach(d => {
+        if (d.region) regionCounts[d.region] = (regionCounts[d.region] || 0) + 1;
+      });
+
+      const badges = REGIONS
+        .filter(r => regionCounts[r] > 0)
+        .map(r => `<div class="day-badge badge-${r}">${r} ${regionCounts[r]}건</div>`)
+        .join('');
+
+      html += `<div class="calendar-day${isToday ? ' today' : ''}${isSelected ? ' selected' : ''}"
+        onclick="selectDate('${dateStr}', ${dayCount})">
+        <div class="day-number">${isToday ? `<span>${dayCount}</span>` : dayCount}</div>
+        <div class="day-badges">${badges}</div>
+      </div>`;
+
+      dayCount++;
+    }
+  }
+
+  document.getElementById('calendar-days').innerHTML = html;
+}
+
+// ================================================================
+// 날짜 선택
+// ================================================================
+function selectDate(dateStr, day) {
+  selectedDate = dateStr;
+  renderCalendar();
+
+  const parts = dateStr.split('-');
+  const days = ['일','월','화','수','목','금','토'];
+  const dow = days[new Date(dateStr).getDay()];
+  document.getElementById('detail-title').textContent =
+    `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일 (${dow}) 예약 현황`;
+
+  const dayData = allData.filter(d => d.date === dateStr && d.status === '승인')
+    .sort((a,b) => (a.startTime||'').localeCompare(b.startTime||''));
+
+  if (dayData.length === 0) {
+    document.getElementById('detail-content').innerHTML =
+      '<div class="empty">이 날짜에 승인된 예약이 없습니다.</div>';
+    return;
+  }
+
+  const rows = dayData.map(d => `
+    <tr>
+      <td>${d.startTime}~${d.endTime}</td>
+      <td><span class="region-badge" style="background: var(--${d.region}-bg); color: var(--${d.region});">${d.region}</span></td>
+      <td>${d.room}</td>
+      <td>${d.title}</td>
+      <td>${d.applicant}</td>
+      <td>${d.company}</td>
+      <td>${d.headcount ? d.headcount+'명' : '-'}</td>
+      <td><span class="status-badge status-${d.status}">${d.status}</span></td>
+    </tr>
+  `).join('');
+
+  document.getElementById('detail-content').innerHTML = `
+    <table class="detail-table">
+      <thead>
+        <tr>
+          <th>시간</th><th>지역</th><th>회의실</th><th>예약명</th>
+          <th>신청자</th><th>소속</th><th>인원</th><th>상태</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ================================================================
+// 지역별 현황
+// ================================================================
+function selectRegion(region, btn) {
+  selectedRegion = region;
+  document.querySelectorAll('.region-tab').forEach(t => {
+    t.className = 'region-tab';
+  });
+  btn.className = `region-tab active-${region}`;
+  renderRegion(region);
+}
+
+function renderRegion(region) {
+  const regionData = allData.filter(d => d.region === region && d.status === '승인')
+    .sort((a,b) => (a.date||'').localeCompare(b.date||'') || (a.startTime||'').localeCompare(b.startTime||''));
+
+  if (regionData.length === 0) {
+    document.getElementById('region-content').innerHTML =
+      '<div class="empty">해당 지역의 승인된 예약이 없습니다.</div>';
+    return;
+  }
+
+  const rows = regionData.map(d => `
+    <tr>
+      <td>${formatDateShort(d.date)}</td>
+      <td>${d.startTime}~${d.endTime}</td>
+      <td>${d.room}</td>
+      <td>${d.title}</td>
+      <td>${d.applicant}</td>
+      <td>${d.company}</td>
+      <td>${d.headcount ? d.headcount+'명' : '-'}</td>
+      <td><span class="status-badge status-${d.status}">${d.status}</span></td>
+    </tr>
+  `).join('');
+
+  document.getElementById('region-content').innerHTML = `
+    <table class="detail-table">
+      <thead>
+        <tr>
+          <th>날짜</th><th>시간</th><th>회의실</th><th>예약명</th>
+          <th>신청자</th><th>소속</th><th>인원</th><th>상태</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ================================================================
+// 탭 전환
+// ================================================================
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  if (tab === 'region') renderRegion(selectedRegion);
+}
+
+// ================================================================
+// 월 이동
+// ================================================================
+function changeMonth(dir) {
+  currentMonth += dir;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+  renderLegend();
+}
+
+// ================================================================
+// 유틸
+// ================================================================
+function toDateStr(date) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+function formatDateShort(dateStr) {
+  if (!dateStr) return '';
+  const [y,m,d] = dateStr.split('-');
+  const days = ['일','월','화','수','목','금','토'];
+  const dow = days[new Date(dateStr).getDay()];
+  return `${parseInt(m)}/${parseInt(d)} (${dow})`;
+}
+
+// 초기 실행
+loadData();
+</script>
+</body>
+</html>

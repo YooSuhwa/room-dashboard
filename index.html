@@ -772,7 +772,7 @@
 // 설정값 — 여기만 수정하면 됩니다
 // Apps Script 웹앱 배포 URL로 교체하세요
 // ================================================================
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNN3OAjeY_EWokQhVOn-1eM8xO3ZikH4kZvnx1ZU214kBE2ed7USU-qhZ93sgCD8Yu_g/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNN3OAjeY_EWokQhVOn-1eM8xO3ZikH4kZvnx1ZU214kBE2ed7USU-qhZ93sgCD8Yu_g/exec?callback=test';
 
 // ================================================================
 // 상태
@@ -1062,20 +1062,21 @@ function formatDateShort(dateStr) {
 // JSONP 방식으로 Apps Script 호출 (CORS 우회)
 function fetchJSONP(url) {
   return new Promise(function(resolve, reject) {
-    var callbackName = 'callback_' + Math.random().toString(36).substr(2, 9);
-    var script = document.createElement('script');
-    script.src = url + '&callback=' + callbackName;
+    var callbackName = 'gaix_cb_' + Date.now();
     window[callbackName] = function(data) {
       delete window[callbackName];
-      document.body.removeChild(script);
+      var el = document.getElementById('jsonp_script');
+      if (el) el.parentNode.removeChild(el);
       resolve(data);
     };
+    var script = document.createElement('script');
+    script.id = 'jsonp_script';
+    script.src = url + '?callback=' + callbackName;
     script.onerror = function() {
       delete window[callbackName];
-      document.body.removeChild(script);
-      reject(new Error('JSONP 요청 실패'));
+      reject(new Error('JSONP 요청 실패 — Apps Script 재배포 확인 필요'));
     };
-    document.body.appendChild(script);
+    document.head.appendChild(script);
   });
 }
 

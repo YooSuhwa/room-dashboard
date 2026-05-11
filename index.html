@@ -770,9 +770,9 @@
 <script>
 // ================================================================
 // 설정값 — 여기만 수정하면 됩니다
+// Apps Script 웹앱 배포 URL로 교체하세요
 // ================================================================
-const NOTION_TOKEN = 'secret_여기에_노션_API키_입력';
-const DATABASE_ID = '041f6107301f4c0cbd6d9c52963880a7';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbxNN3OAjeY_EWokQhVOn-1eM8xO3ZikH4kZvnx1ZU214kBE2ed7USU-qhZ93sgCD8Yu_g/exec/exec';
 
 // ================================================================
 // 상태
@@ -794,36 +794,12 @@ const REGION_COLORS = {
 // ================================================================
 async function loadData() {
   try {
-    const res = await fetch(`https://api.notion.com/v1/databases/${DATABASE_ID}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${NOTION_TOKEN}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        filter: { property: '상태', select: { does_not_equal: '취소' } },
-        sorts: [{ property: '예약 날짜', direction: 'ascending' }],
-        page_size: 100
-      })
-    });
+    const res = await fetch(APPS_SCRIPT_URL);
+    const json = await res.json();
 
-    const data = await res.json();
-    if (data.object === 'error') throw new Error(data.message);
+    if (!json.success) throw new Error(json.error);
 
-    allData = data.results.map(p => ({
-      id: p.id,
-      title: p.properties['예약 제목']?.title?.[0]?.plain_text || '예약',
-      region: p.properties['지역']?.select?.name || '',
-      room: p.properties['회의실']?.select?.name || '',
-      date: p.properties['예약 날짜']?.date?.start || '',
-      startTime: p.properties['시작 시간']?.select?.name || '',
-      endTime: p.properties['종료 시간']?.select?.name || '',
-      applicant: p.properties['신청자 이름']?.rich_text?.[0]?.plain_text || '',
-      company: p.properties['소속 기업']?.rich_text?.[0]?.plain_text || '',
-      status: p.properties['상태']?.select?.name || '',
-      headcount: p.properties['참석 인원']?.number || 0,
-    }));
+    allData = json.data;
 
     updateStats();
     renderCalendar();
